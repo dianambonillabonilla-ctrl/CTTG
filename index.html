@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTTG Medicina - Radicación de Intención</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #333; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .header { background: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { color: #667eea; margin-bottom: 0.5rem; }
+        .header p { color: #666; }
+        .btn-logout { float: right; padding: 0.75rem 1.5rem; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .auth-box { background: white; border-radius: 12px; padding: 3rem; max-width: 450px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .auth-box h1 { font-size: 28px; margin-bottom: 1rem; color: #667eea; }
+        .auth-box p { color: #666; margin-bottom: 1.5rem; }
+        input, select, textarea { width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; margin-bottom: 1rem; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        button { padding: 0.875rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; width: 100%; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: #e5e7eb; color: #333; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #333; font-size: 13px; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 2px solid #f3f4f6; padding-bottom: 1rem; }
+        .card-header h2 { font-size: 18px; color: #333; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-radicado { background: #dbeafe; color: #1e40af; }
+        .badge-aprobado { background: #dcfce7; color: #15803d; }
+        .badge-rechazado { background: #fee2e2; color: #991b1b; }
+        .badge-evaluacion { background: #fef3c7; color: #92400e; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th { background: #f9fafb; padding: 1rem; text-align: left; font-weight: 600; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+        .table td { padding: 1rem; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        .table tr:hover { background: #f9fafb; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { font-size: 20px; font-weight: 600; margin-bottom: 1.5rem; color: #333; }
+        .modal-buttons { display: flex; gap: 1rem; margin-top: 2rem; justify-content: flex-end; }
+        .text-sm { font-size: 12px; color: #666; }
+        .student-item { background: #f9fafb; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .student-item button { padding: 0.4rem 0.8rem; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function generateRadicationNumber() {
+            return 'RAD-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
+
+        function CTTGApp() {
+            const [authState, setAuthState] = useState('login');
+            const [email, setEmail] = useState('');
+            const [verificationCode, setVerificationCode] = useState('');
+            const [userEmail, setUserEmail] = useState('');
+            const [userRole, setUserRole] = useState(null);
+            const [submissions, setSubmissions] = useState(() => {
+                const saved = localStorage.getItem('submissions');
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            const [formData, setFormData] = useState({
+                radicationNumber: '',
+                students: [{ nombre: '', cedula: '', email: '', semestre: '' }],
+                titulo: '',
+                area: '',
+                tutorSugerido1: '',
+                tutorSugerido2: '',
+                estado: 'Radicado',
+                observaciones: ''
+            });
+
+            const [editingId, setEditingId] = useState(null);
+            const [showForm, setShowForm] = useState(false);
+            const [filterStatus, setFilterStatus] = useState('');
+
+            // Autenticación
+            const handleSendCode = () => {
+                if (!email.trim()) return;
+                const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                localStorage.setItem('verif_code', code);
+                localStorage.setItem('verif_email', email);
+                alert(`Código para ${email}: ${code}`);
+                setAuthState('verify');
+            };
+
+            const handleVerifyCode = () => {
+                const savedCode = localStorage.getItem('verif_code');
+                if (verificationCode === savedCode) {
+                    const role = email.toLowerCase() === 'investigacionmedicina@gmail.com' ? 'coordinadora' : 'estudiante';
+                    setUserEmail(email);
+                    setUserRole(role);
+                    setAuthState('app');
+                } else {
+                    alert('Código incorrecto');
+                }
+            };
+
+            // Gestión de formulario
+            const addStudent = () => {
+                setFormData({
+                    ...formData,
+                    students: [...formData.students, { nombre: '', cedula: '', email: '', semestre: '' }]
+                });
+            };
+
+            const removeStudent = (index) => {
+                setFormData({
+                    ...formData,
+                    students: formData.students.filter((_, i) => i !== index)
+                });
+            };
+
+            const updateStudent = (index, field, value) => {
+                const newStudents = [...formData.students];
+                newStudents[index][field] = value;
+                setFormData({ ...formData, students: newStudents });
+            };
+
+            const handleSubmit = () => {
+                if (formData.students.some(s => !s.nombre || !s.cedula)) {
+                    alert('Completa todos los datos de los estudiantes');
+                    return;
+                }
+
+                const newSubmission = {
+                    id: editingId || Date.now(),
+                    ...formData,
+                    radicationNumber: editingId ? formData.radicationNumber : generateRadicationNumber(),
+                    studentEmail: userEmail,
+                    createdAt: new Date().toLocaleString()
+                };
+
+                if (editingId) {
+                    setSubmissions(submissions.map(s => s.id === editingId ? newSubmission : s));
+                } else {
+                    setSubmissions([newSubmission, ...submissions]);
+                }
+
+                localStorage.setItem('submissions', JSON.stringify(submissions));
+                resetForm();
+            };
+
+            const resetForm = () => {
+                setFormData({
+                    radicationNumber: '',
+                    students: [{ nombre: '', cedula: '', email: '', semestre: '' }],
+                    titulo: '',
+                    area: '',
+                    tutorSugerido1: '',
+                    tutorSugerido2: '',
+                    estado: 'Radicado',
+                    observaciones: ''
+                });
+                setEditingId(null);
+                setShowForm(false);
+            };
+
+            const handleEdit = (submission) => {
+                setFormData(submission);
+                setEditingId(submission.id);
+                setShowForm(true);
+            };
+
+            const handleStatusChange = (id, newStatus, tutorAsignado = '') => {
+                setSubmissions(submissions.map(s =>
+                    s.id === id ? { ...s, estado: newStatus, tutorAsignado } : s
+                ));
+                localStorage.setItem('submissions', JSON.stringify(submissions));
+            };
+
+            const filteredSubmissions = filterStatus
+                ? submissions.filter(s => s.estado === filterStatus)
+                : submissions;
+
+            // Vistas
+            if (authState === 'login') {
+                return (
+                    <div className="auth-page">
+                        <div className="auth-box">
+                            <h1>CTTG Medicina</h1>
+                            <p>Radicación de Intención de Trabajo de Grado</p>
+                            <input
+                                type="email"
+                                placeholder="tu.correo@ejemplo.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                            <button className="btn-primary" onClick={handleSendCode}>
+                                Enviar código
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (authState === 'verify') {
+                return (
+                    <div className="auth-page">
+                        <div className="auth-box">
+                            <h1>Verificación</h1>
+                            <p>Código enviado a {email}</p>
+                            <input
+                                type="text"
+                                placeholder="Código de 6 dígitos"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
+                                maxLength="6"
+                                style={{letterSpacing: '4px', fontSize: '18px'}}
+                            />
+                            <button className="btn-primary" onClick={handleVerifyCode}>
+                                Verificar
+                            </button>
+                            <button className="btn-secondary" onClick={() => { setAuthState('login'); setVerificationCode(''); }} style={{marginTop: '1rem'}}>
+                                Cambiar correo
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Vista Estudiante
+            if (userRole === 'estudiante') {
+                return (
+                    <div className="container">
+                        <div className="header">
+                            <h1>Mi Radicación de Intención</h1>
+                            <p>Radica tu intención de trabajo de grado (hasta 3 estudiantes)</p>
+                            <button className="btn-logout" onClick={() => { setAuthState('login'); setUserRole(null); }}>
+                                Salir
+                            </button>
+                        </div>
+
+                        {!showForm ? (
+                            <div>
+                                <button className="btn-primary" onClick={() => setShowForm(true)} style={{marginBottom: '1.5rem', width: 'auto', padding: '1rem 2rem'}}>
+                                    + Nueva radicación
+                                </button>
+
+                                {filteredSubmissions.filter(s => s.studentEmail === userEmail).map(sub => (
+                                    <div key={sub.id} className="card">
+                                        <div className="card-header">
+                                            <h2>{sub.radicationNumber}</h2>
+                                            <span className={`badge badge-${sub.estado.toLowerCase()}`}>
+                                                {sub.estado}
+                                            </span>
+                                        </div>
+                                        <p><strong>Estudiantes:</strong> {sub.students.map(s => s.nombre).join(', ')}</p>
+                                        <p><strong>Título:</strong> {sub.titulo || 'Ninguno'}</p>
+                                        <p><strong>Área:</strong> {sub.area}</p>
+                                        <p><strong>Tutores sugeridos:</strong> {[sub.tutorSugerido1, sub.tutorSugerido2].filter(Boolean).join(', ') || 'No especificado'}</p>
+                                        {sub.estado === 'Aprobado' && sub.tutorAsignado && (
+                                            <p style={{color: '#10b981'}}><strong>✓ Tutor asignado/avalado:</strong> {sub.tutorAsignado}</p>
+                                        )}
+                                        {sub.estado === 'Rechazado' && sub.observaciones && (
+                                            <p style={{color: '#ef4444'}}><strong>Motivo:</strong> {sub.observaciones}</p>
+                                        )}
+                                        <button className="btn-secondary" onClick={() => handleEdit(sub)} style={{marginTop: '1rem'}}>
+                                            Editar
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="card">
+                                <h2 style={{marginBottom: '1.5rem'}}>Formulario de Radicación</h2>
+
+                                <div className="form-group">
+                                    <label>Título de intención (o "Ninguno" si no lo tienes)</label>
+                                    <textarea
+                                        value={formData.titulo}
+                                        onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                                        placeholder="Describe tu tema o escribe 'Ninguno'"
+                                        rows="3"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Área de investigación</label>
+                                    <input
+                                        type="text"
+                                        value={formData.area}
+                                        onChange={(e) => setFormData({...formData, area: e.target.value})}
+                                        placeholder="Ej: Epidemiología, Clínica, etc."
+                                    />
+                                </div>
+
+                                <h3 style={{marginTop: '1.5rem', marginBottom: '1rem'}}>Estudiantes (1-3)</h3>
+                                {formData.students.map((student, i) => (
+                                    <div key={i} className="student-item">
+                                        <div style={{flex: 1}}>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre"
+                                                value={student.nombre}
+                                                onChange={(e) => updateStudent(i, 'nombre', e.target.value)}
+                                                style={{marginBottom: '0.5rem'}}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Cédula"
+                                                value={student.cedula}
+                                                onChange={(e) => updateStudent(i, 'cedula', e.target.value)}
+                                                style={{marginBottom: '0.5rem'}}
+                                            />
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={student.email}
+                                                onChange={(e) => updateStudent(i, 'email', e.target.value)}
+                                                style={{marginBottom: '0.5rem'}}
+                                            />
+                                            <select
+                                                value={student.semestre}
+                                                onChange={(e) => updateStudent(i, 'semestre', e.target.value)}
+                                            >
+                                                <option>Semestre</option>
+                                                {[7,8,9,10,11,12].map(s => <option key={s} value={s}>Semestre {s}</option>)}
+                                            </select>
+                                        </div>
+                                        {formData.students.length > 1 && (
+                                            <button className="btn-danger" onClick={() => removeStudent(i)} style={{marginLeft: '1rem', height: 'fit-content'}}>
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                {formData.students.length < 3 && (
+                                    <button className="btn-secondary" onClick={addStudent} style={{marginTop: '0.5rem'}}>
+                                        + Agregar otro estudiante
+                                    </button>
+                                )}
+
+                                <div style={{marginTop: '1.5rem'}}>
+                                    <label>Profesor(es) tutor sugerido (opcional)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Primer tutor sugerido"
+                                        value={formData.tutorSugerido1}
+                                        onChange={(e) => setFormData({...formData, tutorSugerido1: e.target.value})}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Segundo tutor sugerido (opcional)"
+                                        value={formData.tutorSugerido2}
+                                        onChange={(e) => setFormData({...formData, tutorSugerido2: e.target.value})}
+                                    />
+                                </div>
+
+                                <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem'}}>
+                                    <button className="btn-primary" onClick={handleSubmit} style={{flex: 1}}>
+                                        Enviar a coordinadora
+                                    </button>
+                                    <button className="btn-secondary" onClick={resetForm} style={{flex: 1}}>
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            // Vista Coordinadora
+            if (userRole === 'coordinadora') {
+                return (
+                    <div className="container">
+                        <div className="header">
+                            <h1>Panel de Coordinadora</h1>
+                            <p>Gestiona las radicaciones de intención de estudiantes</p>
+                            <button className="btn-logout" onClick={() => { setAuthState('login'); setUserRole(null); }}>
+                                Salir
+                            </button>
+                        </div>
+
+                        <div className="card" style={{marginBottom: '1.5rem'}}>
+                            <label>Filtrar por estado:</label>
+                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                                <option value="">Todos</option>
+                                <option value="Radicado">Radicado</option>
+                                <option value="Evaluación">Evaluación</option>
+                                <option value="Aprobado">Aprobado</option>
+                                <option value="Rechazado">Rechazado</option>
+                            </select>
+                        </div>
+
+                        {filteredSubmissions.map(sub => (
+                            <div key={sub.id} className="card">
+                                <div className="card-header">
+                                    <div>
+                                        <h2>{sub.radicationNumber}</h2>
+                                        <p className="text-sm">Radicado por: {sub.studentEmail}</p>
+                                    </div>
+                                    <span className={`badge badge-${sub.estado.toLowerCase()}`}>
+                                        {sub.estado}
+                                    </span>
+                                </div>
+
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Cédula</th>
+                                            <th>Email</th>
+                                            <th>Semestre</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sub.students.map((s, i) => (
+                                            <tr key={i}>
+                                                <td>{s.nombre}</td>
+                                                <td>{s.cedula}</td>
+                                                <td>{s.email}</td>
+                                                <td>{s.semestre}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                <div style={{marginTop: '1rem'}}>
+                                    <p><strong>Título:</strong> {sub.titulo || 'Ninguno'}</p>
+                                    <p><strong>Área:</strong> {sub.area}</p>
+                                    <p><strong>Tutores sugeridos:</strong> {[sub.tutorSugerido1, sub.tutorSugerido2].filter(Boolean).join(', ') || 'No especificado'}</p>
+                                    <p><strong>Fecha radicación:</strong> {sub.createdAt}</p>
+                                </div>
+
+                                {sub.estado === 'Radicado' && (
+                                    <div style={{marginTop: '1rem', display: 'flex', gap: '1rem'}}>
+                                        <button className="btn-success" onClick={() => handleStatusChange(sub.id, 'Evaluación')}>
+                                            Enviar a evaluación
+                                        </button>
+                                        <button className="btn-danger" onClick={() => {
+                                            const observaciones = prompt('Motivo del rechazo:');
+                                            if (observaciones) handleStatusChange(sub.id, 'Rechazado', observaciones);
+                                        }}>
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                )}
+
+                                {sub.estado === 'Evaluación' && (
+                                    <div style={{marginTop: '1rem', display: 'flex', gap: '1rem'}}>
+                                        <input
+                                            type="text"
+                                            placeholder="Profesor tutor a asignar o avalado"
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleStatusChange(sub.id, 'Aprobado', e.target.value);
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                        <button className="btn-success" onClick={() => {
+                                            const input = event.target.parentElement.querySelector('input');
+                                            if (input.value) {
+                                                handleStatusChange(sub.id, 'Aprobado', input.value);
+                                                input.value = '';
+                                            }
+                                        }}>
+                                            Aprobar con tutor
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<CTTGApp />);
+    </script>
+</body>
+</html>
