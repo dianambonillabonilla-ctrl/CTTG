@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Estudiante - CTTG Medicina</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .nav-btn { padding: 10px 20px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 5px; }
+        .nav-btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+        .tab-content { display: none; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button.submit { background: #10b981; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>🎓 Panel de Gestión - Estudiante</h1>
+    <div class="nav">
+        <div class="nav-btn active" onclick="showTab('f1')">Fase 1: Radicación</div>
+        <div class="nav-btn" onclick="showTab('f2')">Fase 2: Anexos</div>
+        <div class="nav-btn" onclick="showTab('f3')">Fase 3: Sustentación</div>
+    </div>
+
+    <div id="f1" class="tab-content active">
+        <h2>Registro de Proyecto</h2>
+        <div class="form-group"><label>Título del Trabajo</label><input type="text" id="titulo"></div>
+        <div class="form-group"><label>Cédula Estudiante 1</label><input type="text" id="ced1"></div>
+        <div class="form-group"><label>Nombre Estudiante 1</label><input type="text" id="nom1"></div>
+        <button class="submit" onclick="enviarFase1()">Radicar Proyecto</button>
+    </div>
+
+    <div id="f2" class="tab-content">
+        <h2>Carga de Anexos Técnicos</h2>
+        <div class="form-group"><label>Número de Radicación (CTTG-...)</label><input type="text" id="radF2"></div>
+        <div class="form-group">
+            <label>Tipo de Anexo</label>
+            <select id="tipoAnexo">
+                <option value="A1">Anexo A1</option>
+                <option value="A3">Anexo A3</option>
+                <option value="A10">Anexo A10</option>
+                <option value="Consentimiento">Consentimiento Informado</option>
+            </select>
+        </div>
+        <div class="form-group"><label>URL de Google Drive del archivo</label><input type="text" id="urlF2"></div>
+        <button class="submit" onclick="enviarFase2()">Subir Anexo</button>
+    </div>
+
+    <div id="f3" class="tab-content">
+        <h2>Cierre y Sustentación</h2>
+        <div class="form-group"><label>Número de Radicación</label><input type="text" id="radF3"></div>
+        <div class="form-group"><label>URL Informe Turnitin</label><input type="text" id="turnitin"></div>
+        <div class="form-group"><label>Porcentaje Similitud</label><input type="number" id="porcentaje"></div>
+        <button class="submit" onclick="enviarFase3()">Finalizar Proceso</button>
+    </div>
+
+    <script>
+        const API = "https://script.google.com/macros/s/AKfycbzriRobDKKzBoNbaijxHK1O_niLzdSKdGwl1gsERMAgbAFgkBoKNN4mt9aseENyeXKs/exec";
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+        function showTab(id) {
+            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function enviarFase1() {
+            const datos = { titulo: document.getElementById("titulo").value, cedula1: document.getElementById("ced1").value, nombre1: document.getElementById("nom1").value };
+            const res = await fetch(API, { method: "POST", body: JSON.stringify({ action: "createFase1", datos, emailEstudiante: user.email }) });
+            const data = await res.json();
+            if (data.success) alert("Radicación exitosa: " + data.numero);
+        }
+
+        async function enviarFase2() {
+            const body = { action: "createFase2", numRad: document.getElementById("radF2").value, email: user.email, tipoAnexo: document.getElementById("tipoAnexo").value, urlArch: document.getElementById("urlF2").value, nombreArch: "Documento_F2" };
+            const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
+            const data = await res.json();
+            if (data.success) alert("Anexo cargado correctamente");
+        }
+
+        async function enviarFase3() {
+            const body = { action: "createFase3", numRad: document.getElementById("radF3").value, email: user.email, turnitin: document.getElementById("turnitin").value, porcentaje: document.getElementById("porcentaje").value };
+            const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
+            const data = await res.json();
+            if (data.success) alert("Datos de sustentación enviados");
+        }
+    </script>
+</body>
+</html>
