@@ -2,38 +2,38 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Coordinadora</title>
+    <title>Dashboard - CTTG</title>
     <style>
-        body { font-family: sans-serif; background: #f5f7fa; padding: 20px; }
-        .top-bar { background: #764ba2; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        table { width: 100%; background: white; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f9fafb; }
+        body { font-family: sans-serif; background: #f8fafc; padding: 30px; margin: 0; }
+        .header { background: #764ba2; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #edf2f7; }
+        th { background: #f1f5f9; color: #475569; font-weight: bold; }
+        .status { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; background: #fef3c7; color: #92400e; }
     </style>
 </head>
 <body>
-    <div class="top-bar"><h1>📊 Panel de Control</h1></div>
-    <div class="stats">
-        <div class="stat-card"><h3>Total</h3><div id="totalRad">0</div></div>
+    <div class="header">
+        <h1>📊 Seguimiento de Radicaciones</h1>
+        <button onclick="location.href='index.html'" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cerrar</button>
     </div>
-    <div id="tableContainer">Cargando datos...</div>
+    <div id="tableContainer">Cargando registros...</div>
 
     <script>
-        const URL = "https://script.google.com/macros/s/AKfycbxVdNuiAgme0s74vtTRgh_YKLfNBVdtyqS0-18ouMQqwE_Z0xS5t0VcKDUh4Xaql1DB/exec";
-
+        const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzriRobDKKzBoNbaijxHK1O_niLzdSKdGwl1gsERMAgbAFgkBoKNN4mt9aseENyeXKs/exec";
         async function cargar() {
-            const resp = await fetch(URL, { method: "POST", body: JSON.stringify({ action: "getFase1" }) });
-            const data = await resp.json();
-            if (data.success) {
-                document.getElementById("totalRad").textContent = data.radicaciones.length;
-                document.getElementById("tableContainer").innerHTML = `
-                    <table>
-                        <tr><th>Número</th><th>Estudiante</th><th>Título</th><th>Estado</th></tr>
-                        ${data.radicaciones.map(r => `<tr><td>${r.numero}</td><td>${r.nombre1}</td><td>${r.titulo}</td><td>${r.estado}</td></tr>`).join('')}
-                    </table>`;
-            }
+            try {
+                const resp = await fetch(APP_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getFase1" }) });
+                const data = await resp.json();
+                if (data.success) {
+                    let html = `<table><tr><th>Número</th><th>Estudiante</th><th>Título</th><th>Fecha</th><th>Estado</th></tr>`;
+                    data.radicaciones.forEach(r => {
+                        html += `<tr><td><strong>${r.numero}</strong></td><td>${r.nombre1}</td><td>${r.titulo}</td><td>${r.fecha}</td><td><span class="status">${r.estado}</span></td></tr>`;
+                    });
+                    html += `</table>`;
+                    document.getElementById("tableContainer").innerHTML = html;
+                }
+            } catch(e) { document.getElementById("tableContainer").innerHTML = "Error al cargar datos."; }
         }
         cargar();
     </script>
