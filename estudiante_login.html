@@ -1,34 +1,15 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Login Estudiante</title>
-    <style>
-        body { font-family: sans-serif; background: #764ba2; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { background: white; padding: 30px; border-radius: 8px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h2>Ingreso Estudiante</h2>
-        <input type="email" id="email" placeholder="Correo institucional">
-        <input type="password" id="pass" placeholder="Contraseña">
-        <button onclick="login()">Ingresar</button>
-    </div>
-    <script>
-        const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzriRobDKKzBoNbaijxHK1O_niLzdSKdGwl1gsERMAgbAFgkBoKNN4mt9aseENyeXKs/exec";
-        async function login() {
-            try {
-                const res = await fetch(APP_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "login", email: document.getElementById("email").value, password: document.getElementById("pass").value }) });
-                const data = await res.json();
-                if (data.success && data.user.rol === "estudiante") {
-                    localStorage.setItem("user", JSON.stringify(data.user));
-                    window.location.href = "estudiante_radicacion.html";
-                } else { alert("Acceso denegado o credenciales incorrectas"); }
-            } catch(e) { alert("Error de conexión"); }
+<script>
+    const API = "https://script.google.com/macros/s/AKfycbzriRobDKKzBoNbaijxHK1O_niLzdSKdGwl1gsERMAgbAFgkBoKNN4mt9aseENyeXKs/exec";
+    async function login() {
+        const email = document.getElementById("email").value;
+        const pass = document.getElementById("pass").value;
+        const res = await fetch(API, { method: "POST", body: JSON.stringify({ action: "login", email: email, password: pass }) });
+        const data = await res.json();
+        if (data.success && data.user.rol === "estudiante") {
+            localStorage.setItem("user", JSON.stringify(data.user));
+            window.location.href = "estudiante_panel.html"; // CAMBIO AQUÍ
+        } else {
+            alert("Usuario o clave incorrecta");
         }
-    </script>
-</body>
-</html>
+    }
+</script>
