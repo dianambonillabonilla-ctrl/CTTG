@@ -82,12 +82,10 @@
         <div class="fg"><label>Email *</label><input type="email" id="t1Email" placeholder="tutor@usc.edu.co"></div>
         <div class="fg"><label>Teléfono</label><input id="t1Telefono" placeholder="300 000 0000"></div>
         <div class="fg"><label>Rol</label>
-          <select id="t1Relacion">
-            <option value="Director">Director</option>
-            <option value="Asesor metodológico">Asesor metodológico</option>
-            <option value="Asesor temático">Asesor temático</option>
-            <option value="Co-director">Co-director</option>
-          </select>
+          <select id="t1Relacion contractual USC">
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+       </select>
         </div>
       </div>
     </div>
@@ -100,13 +98,11 @@
         <div class="fg"><label>Email</label><input type="email" id="t2Email" placeholder="(opcional)"></div>
         <div class="fg"><label>Teléfono</label><input id="t2Telefono" placeholder="(opcional)"></div>
         <div class="fg"><label>Rol</label>
-          <select id="t2Relacion">
+          <select id="t2Relacion Contractual USC ">
             <option value="">— Sin tutor 2 —</option>
-            <option value="Director">Director</option>
-            <option value="Asesor metodológico">Asesor metodológico</option>
-            <option value="Asesor temático">Asesor temático</option>
-            <option value="Co-director">Co-director</option>
-          </select>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+         </select>
         </div>
       </div>
     </div>
