@@ -16,7 +16,6 @@
   .phase-indicator{display:inline-block;background:rgba(102,126,234,.2);border:1px solid rgba(102,126,234,.5);color:#a5b4fc;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:20px}
   .section{margin-bottom:24px}
   .section-title{color:rgba(255,255,255,.7);font-size:12px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .section-icon{font-size:16px}
   .fg{margin-bottom:16px}
   label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.5);margin-bottom:6px}
   input[type="text"],input[type="email"],input[type="number"],input[type="date"],select,textarea{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-family:'Outfit',sans-serif;font-size:14px;padding:12px 14px;outline:none;transition:border-color .2s}
@@ -24,18 +23,22 @@
   input:focus,select:focus,textarea:focus{border-color:rgba(102,126,234,.7);background:rgba(255,255,255,.1)}
   select option{background:#1a0533;color:#fff}
   textarea{resize:vertical;min-height:80px}
-  .file-upload{position:relative;display:block;width:100%;padding:24px;border:2px dashed rgba(102,126,234,.5);border-radius:12px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(102,126,234,.05)}
-  .file-upload:hover{border-color:rgba(102,126,234,.8);background:rgba(102,126,234,.1)}
-  .file-upload input{display:none}
-  .file-upload-label{display:block;color:rgba(255,255,255,.7);font-size:14px;font-weight:600;margin-bottom:6px}
-  .file-upload-sub{display:block;color:rgba(255,255,255,.4);font-size:12px}
-  .file-name{color:#a5b4fc;font-size:13px;margin-top:8px;font-weight:600}
+  .upload-area{border:2px dashed rgba(102,126,234,.5);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(102,126,234,.05)}
+  .upload-area:hover{border-color:rgba(102,126,234,.8);background:rgba(102,126,234,.1)}
+  .upload-area input[type="file"]{display:none}
+  .upload-area .ua-icon{font-size:28px;margin-bottom:8px}
+  .upload-area .ua-label{color:rgba(255,255,255,.7);font-size:14px;font-weight:600;margin-bottom:4px}
+  .upload-area .ua-sub{color:rgba(255,255,255,.35);font-size:12px}
+  .upload-status{margin-top:14px;border-radius:10px;padding:12px 14px;font-size:13px;display:none}
+  .upload-status.uploading{background:rgba(102,126,234,.15);border:1px solid rgba(102,126,234,.3);color:#a5b4fc}
+  .upload-status.done{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+  .upload-status.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
   .err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
   .success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#86efac;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
   .btn-group{display:flex;gap:12px;margin-top:24px}
   .btn{flex:1;padding:13px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:none;transition:all .2s}
   .btn-submit{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 15px rgba(102,126,234,.4)}
-  .btn-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 28px rgba(102,126,234,.5)}
+  .btn-submit:hover:not(:disabled){transform:translateY(-1px)}
   .btn-submit:disabled{opacity:.6;cursor:not-allowed}
   .btn-back{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7)}
   .btn-back:hover{background:rgba(255,255,255,.15)}
@@ -55,37 +58,34 @@
   </div>
 
   <div class="phase-indicator">📋 FASE 2 — PROTOCOLO</div>
-
   <div id="err" class="err"></div>
   <div id="success" class="success"></div>
 
-  <!-- Sección: Datos de Radicación -->
   <div class="section">
-    <div class="section-title"><span class="section-icon">🎓</span> Datos de Radicación</div>
+    <div class="section-title"><span>🎓</span> Datos de Radicación</div>
     <div class="fg">
       <label>Número de Radicación *</label>
-      <input type="text" id="numeroRadicacion" placeholder="CTTG-2025-0001" readonly style="opacity:.7">
+      <input type="text" id="numeroRadicacion" readonly style="opacity:.7">
     </div>
   </div>
 
-  <!-- Sección: Documento -->
   <div class="section">
-    <div class="section-title"><span class="section-icon">📤</span> Documento Protocolo</div>
-    <div class="info-box">📌 Sube tu archivo en formato PDF o DOC. Máximo 50MB.</div>
+    <div class="section-title"><span>📤</span> Documento Protocolo</div>
+    <div class="info-box">📌 Sube tu archivo PDF o DOC. Máx. 50MB. Se guardará automáticamente en Drive al seleccionarlo.</div>
     <div class="fg">
       <label>Protocolo (PDF/DOC) *</label>
-      <label class="file-upload">
-        <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="mostrarNombre()">
-        <span class="file-upload-label">📁 Selecciona tu archivo</span>
-        <span class="file-upload-sub">Haz clic o arrastra aquí</span>
-        <span class="file-name" id="fileName"></span>
+      <label class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="subirArchivo()">
+        <div class="ua-icon">📁</div>
+        <div class="ua-label">Selecciona tu archivo</div>
+        <div class="ua-sub">Haz clic aquí · PDF o DOC · Máx. 50MB</div>
       </label>
+      <div class="upload-status" id="uploadStatus"></div>
     </div>
   </div>
 
-  <!-- Sección: Cambios -->
   <div class="section">
-    <div class="section-title"><span class="section-icon">🔄</span> Información del Protocolo</div>
+    <div class="section-title"><span>🔄</span> Información del Protocolo</div>
     <div class="fg">
       <label>¿Qué Anexo Cambió? *</label>
       <select id="anexoCambio">
@@ -103,15 +103,16 @@
     </div>
   </div>
 
-  <!-- Botones -->
   <div class="btn-group">
     <button class="btn btn-back" onclick="volver()">← Volver</button>
-    <button class="btn btn-submit" id="btnSubmit" onclick="cargarProtocolo()">Cargar Protocolo</button>
+    <button class="btn btn-submit" id="btnSubmit" onclick="enviarProtocolo()" disabled>Cargar Protocolo</button>
   </div>
 </div>
 
 <script>
 const URL_APP = "https://script.google.com/macros/s/AKfycbxThWOEZZWmJTZ9SsAdEOE7a2e0ai9uddlZBGTUz7rt-iq2VepCf0YC8r4trjAiF7MhlA/exec";
+let driveUrl = null;
+let nombreArchivo = null;
 
 document.addEventListener('DOMContentLoaded', function() {
   const user = JSON.parse(localStorage.getItem('cttg_user') || '{}');
@@ -121,104 +122,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function cargarRadicacion() {
   const user = JSON.parse(localStorage.getItem('cttg_user') || '{}');
-  fetch(URL_APP, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getFase1ByEmail', email: user.email })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success && data.radicaciones.length > 0) {
-      document.getElementById('numeroRadicacion').value = data.radicaciones[0].numero;
-      document.getElementById('numeroRadicacion').dataset.numero = data.radicaciones[0].numero;
-    } else {
-      document.getElementById('err').textContent = 'No se encontró radicación. Debes radicar un proyecto primero.';
-      document.getElementById('err').style.display = 'block';
-    }
-  })
-  .catch(e => console.error(e));
+  fetch(URL_APP, { method: 'POST', body: JSON.stringify({ action: 'getFase1ByEmail', email: user.email }) })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.radicaciones.length > 0) {
+        document.getElementById('numeroRadicacion').value = data.radicaciones[0].numero;
+      } else {
+        mostrarError('No se encontró radicación. Debes radicar un proyecto primero.');
+      }
+    }).catch(e => console.error(e));
 }
 
-function mostrarNombre() {
-  const file = document.getElementById('fileInput').files[0];
-  if (file) {
-    document.getElementById('fileName').textContent = '✓ ' + file.name;
-  }
+function mostrarError(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.style.display = 'block';
 }
 
-function cargarProtocolo() {
-  const user = JSON.parse(localStorage.getItem('cttg_user') || '{}');
+function setStatus(tipo, msg) {
+  const el = document.getElementById('uploadStatus');
+  el.className = 'upload-status ' + tipo;
+  el.style.display = 'block';
+  el.innerHTML = msg;
+}
+
+function subirArchivo() {
   const file = document.getElementById('fileInput').files[0];
-  const numero = document.getElementById('numeroRadicacion').value;
-  const anexo = document.getElementById('anexoCambio').value;
-  const obs = document.getElementById('observaciones').value;
-  const err = document.getElementById('err');
-  const success = document.getElementById('success');
-  const btn = document.getElementById('btnSubmit');
+  if (!file) return;
+  if (file.size > 50 * 1024 * 1024) { setStatus('error', '❌ El archivo supera el límite de 50MB.'); return; }
 
-  err.style.display = 'none';
-  success.style.display = 'none';
-
-  if (!numero || !file || !anexo) {
-    err.textContent = 'Completa todos los campos requeridos (*)';
-    err.style.display = 'block';
-    return;
-  }
-
-  if (file.size > 50 * 1024 * 1024) {
-    err.textContent = 'El archivo es muy grande. Máximo 50MB.';
-    err.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Subiendo archivo...';
+  driveUrl = null;
+  nombreArchivo = file.name;
+  document.getElementById('btnSubmit').disabled = true;
+  setStatus('uploading', '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(165,180,252,.3);border-top-color:#a5b4fc;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px"></span>Subiendo <strong>' + file.name + '</strong> a Drive...');
 
   const reader = new FileReader();
   reader.onload = function(e) {
     const base64 = e.target.result.split(',')[1];
-    fetch(URL_APP, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'crearProtocolo',
-        numeroRadicacion: numero,
-        emailEstudiante: user.email,
-        nombreArchivo: file.name,
-        tipoArchivo: file.type,
-        base64: base64,
-        anexoCambio: anexo,
-        observaciones: obs
-      })
-    })
+    fetch(URL_APP, { method: 'POST', body: JSON.stringify({
+      action: 'subirArchivo', base64,
+      nombreArchivo: file.name,
+      tipoArchivo: file.type || 'application/pdf',
+      subcarpeta: 'Protocolos'
+    })})
     .then(r => r.json())
     .then(data => {
       if (data.success) {
-        success.textContent = '✅ Protocolo cargado exitosamente. La coordinadora lo evaluará pronto.';
-        success.style.display = 'block';
-        document.getElementById('fileInput').value = '';
-        document.getElementById('fileName').textContent = '';
-        document.getElementById('anexoCambio').value = '';
-        document.getElementById('observaciones').value = '';
-        setTimeout(() => { window.location.href = 'estudiante_dashboard.html'; }, 2000);
+        driveUrl = data.url;
+        setStatus('done', '✅ <strong>' + file.name + '</strong> subido · <a href="' + data.url + '" target="_blank" style="color:#6ee7b7">Ver en Drive ↗</a>');
+        document.getElementById('btnSubmit').disabled = false;
       } else {
-        err.textContent = data.error || 'Error al cargar protocolo';
-        err.style.display = 'block';
+        setStatus('error', '❌ Error al subir: ' + (data.error || 'Intenta de nuevo'));
       }
     })
-    .catch(e => {
-      err.textContent = 'Error de conexión: ' + e.message;
-      err.style.display = 'block';
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.innerHTML = 'Cargar Protocolo';
-    });
+    .catch(e => setStatus('error', '❌ Error de conexión: ' + e.message));
   };
   reader.readAsDataURL(file);
 }
 
-function volver() {
-  window.location.href = 'estudiante_dashboard.html';
+function enviarProtocolo() {
+  const user   = JSON.parse(localStorage.getItem('cttg_user') || '{}');
+  const numero = document.getElementById('numeroRadicacion').value;
+  const anexo  = document.getElementById('anexoCambio').value;
+  const obs    = document.getElementById('observaciones').value;
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('success').style.display = 'none';
+
+  if (!numero)   { mostrarError('No se encontró número de radicación'); return; }
+  if (!driveUrl) { mostrarError('Primero debes subir el archivo'); return; }
+  if (!anexo)    { mostrarError('Selecciona qué anexo cambió'); return; }
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Registrando...';
+
+  fetch(URL_APP, { method: 'POST', body: JSON.stringify({
+    action: 'crearProtocolo',
+    numeroRadicacion: numero,
+    emailEstudiante: user.email,
+    nombreArchivo,
+    urlArchivo: driveUrl,
+    anexoCambio: anexo,
+    observaciones: obs
+  })})
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      const suc = document.getElementById('success');
+      suc.textContent = '✅ Protocolo registrado exitosamente. La coordinadora lo evaluará pronto.';
+      suc.style.display = 'block';
+      setTimeout(() => { window.location.href = 'estudiante_dashboard.html'; }, 2000);
+    } else {
+      mostrarError(data.error || 'Error al registrar protocolo');
+      btn.disabled = false; btn.innerHTML = 'Cargar Protocolo';
+    }
+  })
+  .catch(e => {
+    mostrarError('Error de conexión: ' + e.message);
+    btn.disabled = false; btn.innerHTML = 'Cargar Protocolo';
+  });
 }
+
+function volver() { window.location.href = 'estudiante_dashboard.html'; }
 </script>
 </body>
 </html>
