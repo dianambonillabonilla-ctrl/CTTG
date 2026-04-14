@@ -44,8 +44,11 @@
   .upload-item .ui-badge{font-size:11px;padding:3px 9px;border-radius:6px;font-weight:700;background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);flex-shrink:0}
   .upload-item .ui-badge.done{background:rgba(16,185,129,.2);color:#6ee7b7}
   .upload-item .ui-badge.opt{background:rgba(102,126,234,.15);color:#a5b4fc}
+  .upload-item .ui-badge.uploading{background:rgba(245,158,11,.15);color:#fcd34d}
+  .upload-item .ui-badge.error{background:rgba(239,68,68,.15);color:#fca5a5}
   .upload-btn{background:rgba(102,126,234,.15);border:1px solid rgba(102,126,234,.35);color:#a5b4fc;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;flex-shrink:0}
   .upload-btn:hover{background:rgba(102,126,234,.25)}
+  .upload-btn:disabled{opacity:.5;cursor:not-allowed}
   input[type="file"]{display:none}
   .turnitin-pct{display:flex;align-items:center;gap:10px;margin-top:10px}
   .turnitin-pct input{max-width:90px}
@@ -225,7 +228,8 @@
 <script>
 const URL_APP = "https://script.google.com/macros/s/AKfycbxThWOEZZWmJTZ9SsAdEOE7a2e0ai9uddlZBGTUz7rt-iq2VepCf0YC8r4trjAiF7MhlA/exec";
 let user = null;
-const archivosB64 = {};
+// Almacena URLs de Drive por campo (no base64)
+const driveUrls = {};
 
 (function(){
   user = JSON.parse(localStorage.getItem('cttg_user') || 'null');
@@ -262,19 +266,51 @@ function validarTurnitin() {
   document.getElementById('pctWarn').style.display = (!isNaN(pct) && pct >= 20) ? 'block' : 'none';
 }
 
+// Sube el archivo a Drive inmediatamente al seleccionarlo
 function archivoSeleccionado(campo, input) {
   const file = input.files[0];
   if (!file) return;
   if (!file.name.toLowerCase().endsWith('.pdf')) { toast('Solo se aceptan archivos PDF', 'warn'); input.value = ''; return; }
   if (file.size > 15 * 1024 * 1024) { toast('El archivo supera 15MB', 'warn'); input.value = ''; return; }
+
   const badge = document.getElementById('badge-' + campo);
-  badge.textContent = '⏳ Cargando...';
-  badge.className = 'ui-badge';
+  const btn   = input.closest('.upload-item').querySelector('.upload-btn');
+  badge.textContent = '⏳ Subiendo...';
+  badge.className = 'ui-badge uploading';
+  btn.disabled = true;
+  delete driveUrls[campo];
+
   const reader = new FileReader();
-  reader.onload = function(e) {
-    archivosB64[campo] = { base64: e.target.result.split(',')[1], nombre: file.name };
-    badge.textContent = '✓ ' + file.name.substring(0, 16) + (file.name.length > 16 ? '…' : '');
-    badge.className = 'ui-badge done';
+  reader.onload = async function(e) {
+    const base64 = e.target.result.split(',')[1];
+    try {
+      const res = await fetch(URL_APP, { method: 'POST', body: JSON.stringify({
+        action: 'subirArchivo',
+        base64,
+        nombreArchivo: file.name,
+        tipoArchivo: 'application/pdf',
+        subcarpeta: 'Fase3'
+      })});
+      const d = await res.json();
+      if (d.success) {
+        driveUrls[campo] = d.url;
+        badge.textContent = '✓ ' + file.name.substring(0, 14) + (file.name.length > 14 ? '…' : '');
+        badge.className = 'ui-badge done';
+        btn.textContent = 'Cambiar';
+      } else {
+        badge.textContent = '❌ Error';
+        badge.className = 'ui-badge error';
+        toast('Error al subir ' + file.name + ': ' + (d.error || ''), 'err');
+        input.value = '';
+      }
+    } catch(err) {
+      badge.textContent = '❌ Sin conexión';
+      badge.className = 'ui-badge error';
+      toast('Error de conexión', 'err');
+      input.value = '';
+    } finally {
+      btn.disabled = false;
+    }
   };
   reader.readAsDataURL(file);
 }
@@ -285,22 +321,22 @@ async function enviarSolicitud() {
   const nombres  = document.getElementById('nombres').value.trim();
   const pct      = document.getElementById('pctTurnitin').value;
 
-  if (!numero)   { toast('No se encontró número de radicación', 'warn'); return; }
-  if (!semestre) { toast('Selecciona tu semestre', 'warn'); return; }
-  if (!nombres)  { toast('Ingresa los nombres para el acta', 'warn'); return; }
-  if (!archivosB64.anexoA7)  { toast('Carga el Anexo A7', 'warn'); return; }
-  if (!archivosB64.articulo) { toast('Carga el Artículo o Capítulo', 'warn'); return; }
-  if (!archivosB64.guia)     { toast('Carga la Guía para Autores', 'warn'); return; }
-  if (!archivosB64.turnitin) { toast('Carga el Reporte Turnitin', 'warn'); return; }
-  if (!pct)                  { toast('Ingresa el porcentaje Turnitin', 'warn'); return; }
+  if (!numero)              { toast('No se encontró número de radicación', 'warn'); return; }
+  if (!semestre)            { toast('Selecciona tu semestre', 'warn'); return; }
+  if (!nombres)             { toast('Ingresa los nombres para el acta', 'warn'); return; }
+  if (!driveUrls.anexoA7)  { toast('Espera a que el Anexo A7 termine de subir', 'warn'); return; }
+  if (!driveUrls.articulo) { toast('Espera a que el Artículo termine de subir', 'warn'); return; }
+  if (!driveUrls.guia)     { toast('Espera a que la Guía para Autores termine de subir', 'warn'); return; }
+  if (!driveUrls.turnitin) { toast('Espera a que el Reporte Turnitin termine de subir', 'warn'); return; }
+  if (!pct)                { toast('Ingresa el porcentaje Turnitin', 'warn'); return; }
   if (parseFloat(pct) >= 20) { toast('El porcentaje Turnitin debe ser menor al 20%', 'err'); return; }
 
   const archivos = {
-    anexoA7:    archivosB64.anexoA7?.base64  || '',
-    articulo:   archivosB64.articulo?.base64 || '',
-    guia:       archivosB64.guia?.base64     || '',
-    avalCCEB:   archivosB64.avalCCEB?.base64 || '',
-    turnitin:   archivosB64.turnitin?.base64 || '',
+    anexoA7:     driveUrls.anexoA7  || '',
+    articulo:    driveUrls.articulo || '',
+    guia:        driveUrls.guia     || '',
+    avalCCEB:    driveUrls.avalCCEB || '',
+    turnitin:    driveUrls.turnitin || '',
     pctTurnitin: pct
   };
 
@@ -311,16 +347,13 @@ async function enviarSolicitud() {
   if (j2n) jurados.push({ nombre: j2n, cedula: document.getElementById('j2Cedula').value.trim(), email: document.getElementById('j2Email').value.trim() });
 
   const btn = document.getElementById('btnEnviar');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Enviando...';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Enviando solicitud...';
   try {
     const res = await fetch(URL_APP, { method: 'POST', body: JSON.stringify({
       action: 'crearFase3',
       numeroRadicacion: numero,
       emailEstudiante: user.email,
-      semestre,
-      nombres,
-      archivos,
-      jurados
+      semestre, nombres, archivos, jurados
     })});
     const d = await res.json();
     if (d.success) {
